@@ -9,7 +9,11 @@ using d9.utl;
 namespace NdfSharp;
 public class NdfRow : INdfNode
 {
-    private readonly Dictionary<string, INdfNode> _dict = new();
+    // important insight: NdfRow values will _always_ be either NdfList or a literal type (which we'll just call a string for now)
+    //                    similarly, NdfLists will _always_ have items of type NdfRow
+    //                    NdfRows will _always_ have a parent which is either NdfList or null
+    //                    NdfLists will _always_ have a parent which is either NdfRow or null
+    private readonly Dictionary<string, Union<NdfList, string>> _dict = new();
     /// <summary>
     /// https://github.com/Ulibos/ndf-parse/blob/main/ndf_parse/model/abc.py#L115-L118
     /// </summary>
