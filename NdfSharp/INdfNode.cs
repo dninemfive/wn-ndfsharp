@@ -1,4 +1,7 @@
 ﻿namespace NdfSharp;
-public interface INdfNode : IReadOnlyDictionary<string, INdfNode>
+public interface INdfNode
 {
+    public INdfNode Copy();
+    public T? CopyAs<T>() where T : class, INdfNode
+        => Copy() as T;
 }
