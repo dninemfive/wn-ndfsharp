@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace NdfSharp;
-internal class Union<T1, T2>
+public class Union<T1, T2>
     where T1 : class
     where T2 : class
 {
@@ -20,4 +20,14 @@ internal class Union<T1, T2>
     {
         _t2 = t2;
     }
-}
+    public object Value
+        => (_t1 as object) ?? (_t2 as object) ?? throw new Exception($"Error: {TypeName} has neither a {typeof(T1).Name} nor a {typeof(T2).Name} value!");
+    /// <summary>
+    /// T should always be either : T1 or : T2 but idk how to do that constraint
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public T As<T>()
+        => (T)Value;
+    public string TypeName => $"Union<{typeof(T1).Name}|{typeof(T2).Name}>";
+} 

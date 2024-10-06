@@ -7,13 +7,18 @@ using System.Threading.Tasks;
 using d9.utl;
 
 namespace NdfSharp;
-public class NdfRow : INdfNode
+public class NdfRowValue : Union<NdfList, string>
+{
+    public NdfRowValue(NdfList list) : base(list) { }
+    public NdfRowValue(string str) : base(str) { }
+}
+public class NdfRow : ICopyable<NdfRow>
 {
     // important insight: NdfRow values will _always_ be either NdfList or a literal type (which we'll just call a string for now)
     //                    similarly, NdfLists will _always_ have items of type NdfRow
     //                    NdfRows will _always_ have a parent which is either NdfList or null
     //                    NdfLists will _always_ have a parent which is either NdfRow or null
-    private readonly Dictionary<string, Union<NdfList, string>> _dict = new();
+    private readonly Dictionary<string, NdfRowValue> _dict = new();
     /// <summary>
     /// https://github.com/Ulibos/ndf-parse/blob/main/ndf_parse/model/abc.py#L115-L118
     /// </summary>
@@ -42,7 +47,7 @@ public class NdfRow : INdfNode
     /// https://github.com/Ulibos/ndf-parse/blob/main/ndf_parse/model/abc.py#L120-L125
     /// </summary>
     /// <returns></returns>
-    public virtual INdfNode Copy()
+    public virtual NdfRow Copy()
     {
         NdfRow result = (NdfRow)MemberwiseClone();
         result.Parent = null;
@@ -54,10 +59,10 @@ public class NdfRow : INdfNode
     /// <param name="changes"></param>
     /// <param name="opName"></param>
     /// <param name="caller"></param>
-    private void Edit(Dictionary<string, INdfNode> changes)
+    private void Edit(Dictionary<string, NdfRowValue> changes)
     {
         // i'm not adding aliases so this can be a lot simpler
-        foreach((string k, INdfNode v) in changes)
+        foreach((string k, NdfRowValue v) in changes)
             _dict[k] = v;
     }
     /// <summary>
@@ -77,23 +82,23 @@ public class NdfRow : INdfNode
         {
             HashSet<string> allKeys = _dict.Keys.Union(other._dict.Keys).ToHashSet();
             foreach (string key in allKeys)
-                if (!(_dict.TryGetValue(key, out INdfNode? thisVal)
-                    && other._dict.TryGetValue(key, out INdfNode? otherVal)
+                if (!(_dict.TryGetValue(key, out NdfRowValue? thisVal)
+                    && other._dict.TryGetValue(key, out NdfRowValue? otherVal)
                     && thisVal == otherVal))
                     return false;
             return true;
         }
         return false;
     }
-    public override INdfNode this[string key]
+    public NdfRowValue this[string key]
     {
         get => _dict[key];
         set
         {
-            if(value is NdfList list)
+            if(value.As<NdfList>() is NdfList list)
             {
                 if (list.Parent is not null && list.Parent != this)
-                    list = (NdfList)list.Copy();
+                    list = list.Copy();
                 list.Parent = this;
             }
         }
