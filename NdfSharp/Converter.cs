@@ -1,6 +1,8 @@
-﻿using System;
+﻿using d9.utl;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TreeSitter;
@@ -9,9 +11,15 @@ namespace NdfSharp;
 internal delegate Dictionary<string, dynamic> Converter(Node node);
 internal static class Converters
 {
-    public static Dictionary<string, dynamic> Convert(this Node node)
+    public static NdfNode Convert(this Node node)
     {
-        throw new NotImplementedException();
+        foreach (Type type in ReflectionUtils.AllLoadedTypesWithAttribute<NdfNodeTypeAttribute>(AppDomain.CurrentDomain))
+        {
+            NdfNodeTypeAttribute attr = type.GetCustomAttribute<NdfNodeTypeAttribute>()!;
+            if (attr.Matches(node) && type is IConvertableFromNode converter)
+                return converter.Convert(node);
+        }
+        return null;
     }
     private static Converter IdkWhatToCallThisRn(string field1, string field2key, string field2)
         => delegate (Node node)

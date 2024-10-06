@@ -1,37 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TreeSitter;
+﻿using TreeSitter;
 
 namespace NdfSharp;
-internal class UntypedNdfList
-{
-    public bool IsRoot { get; set; }
-    
-}
 public class NdfList<T>
-    : IEnumerable<T>
-    where T : NdfRow
+    where T : NdfRow<T>
 {
     public bool IsRoot { get; set; }
-    public void Add(T item) { }
-}
-public class NdfRow
-{
-
-}
-public class NdfObject(string type) : NdfList<NdfMemberRow>
-{
-    public string Type { get; set; } = type;
-    public void Add(Dictionary<string, object> item) { }
-}
-public class NdfMemberRow : NdfRow { }
-public class NdfTemplate(string type, string @namespace)
-    : NdfList<NdfMemberRow>
-{
-    string Type = type;
-    string Namespace = @namespace;
-    public NdfTemplate(Node node) : this(node.TryGetField("type")!.ToString(), node.TryGetField("name")!.ToString()) { }
+    private readonly List<T> _rows = new();
+    /// <summary>
+    /// https://github.com/Ulibos/ndf-parse/blob/main/ndf_parse/model/abc.py#L883-L884
+    /// </summary>
+    /// <param name="item"></param>
+    public void Add(T item)
+    {
+        SetSingleRow(_rows.Count, item, false);
+    }
+    /// <summary>
+    /// https://github.com/Ulibos/ndf-parse/blob/main/ndf_parse/model/abc.py#L1141-L1167
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="item"></param>
+    /// <param name="reuse"></param>
+    private void SetSingleRow(int index, T item, bool reuse = false)
+    {
+        if (reuse && _rows[index] == item)
+            return;
+        T old = _rows[index];
+        _rows[index] = item;
+        old.Parent = null;
+        item.Parent = this;
+    }
 }
