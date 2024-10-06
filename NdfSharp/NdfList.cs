@@ -1,7 +1,7 @@
 ﻿using TreeSitter;
 
 namespace NdfSharp;
-public class NdfList
+public class NdfList : IEnumerable<NdfRow>, INdfNode
 {
     public bool IsRoot { get; set; }
     private readonly List<NdfRow> _rows = new();
@@ -28,4 +28,6 @@ public class NdfList
         old.Parent = null;
         item.Parent = this;
     }
+    public NdfRow? Parent { get; internal set; }
+    public INdfNode Copy() { }
 }
